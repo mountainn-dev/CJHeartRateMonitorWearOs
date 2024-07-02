@@ -3,6 +3,8 @@
 
     <!-- Home -->
     <string name="btn_start_monitoring">근무 시작</string>
+    <string name="btn_setting_permission">권한 설정</string>
+    <string name="essential_permission_message">필수 권한이\n 설정되어있지 않습니다.</string>
 
     <!-- Monitoring -->
     <string name="present_heart_rate">현재 심박수</string>
