@@ -1,10 +1,9 @@
-package com.san.heartratemonitorwearos
+package com.san.heartratemonitorwearos.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -16,6 +15,8 @@ import androidx.core.app.NotificationCompat
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import com.san.heartratemonitorwearos.R
+import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,7 +33,7 @@ class HeartRateService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
-        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         dataClient = Wearable.getDataClient(this)
     }
@@ -85,7 +86,7 @@ class HeartRateService : Service(), SensorEventListener {
     private fun createNotification(): android.app.Notification {
         val channelId = "heart_rate_channel"
         val channelName = "Heart Rate Service"
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val channel = NotificationChannel(
             channelId,

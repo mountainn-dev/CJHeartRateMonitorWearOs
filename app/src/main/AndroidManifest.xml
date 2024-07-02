@@ -14,17 +14,17 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
         <service
-            android:name=".HeartRateService"
+            android:name=".service.HeartRateService"
             android:exported="true"
             android:foregroundServiceType="health">
         </service>
 
         <activity
-            android:name=".MonitoringActivity"
+            android:name=".view.screen.MonitoringActivity"
             android:exported="true"
             android:taskAffinity="" />
         <activity
-            android:name=".HomeActivity"
+            android:name=".view.screen.HomeActivity"
             android:exported="true"
             android:taskAffinity="">
             <intent-filter>

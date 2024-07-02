@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    tools:context=".MonitoringActivity">
+    tools:context=".view.screen.MonitoringActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
