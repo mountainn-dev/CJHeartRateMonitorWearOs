@@ -14,10 +14,13 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
         <activity
+            android:name=".MonitoringActivity"
+            android:exported="true"
+            android:taskAffinity="" />
+        <activity
             android:name=".HomeActivity"
             android:exported="true"
             android:taskAffinity="">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

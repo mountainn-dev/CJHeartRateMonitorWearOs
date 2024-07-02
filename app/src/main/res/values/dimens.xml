@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common -->
+    <dimen name="margin_padding_extremely_samll">4dp</dimen>
+    <dimen name="margin_padding_small">8dp</dimen>
+    <dimen name="margin_padding_default">12dp</dimen>
+
+    <!-- Home -->
+
+    <!-- Monitoring -->
+    <dimen name="size_heart_rate">32dp</dimen>
+</resources>
