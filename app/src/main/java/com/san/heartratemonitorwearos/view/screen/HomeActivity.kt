@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,18 +33,35 @@ class HomeActivity : ComponentActivity() {
 
     private fun setBtnStartMonitoringListener() {
         binding.btnStartMonitoring.setOnClickListener {
-            val intent = Intent(this, HeartRateService::class.java)
-            startService(intent)
+            startHeartRateService()
+            sendUserToMonitoringScreen()
         }
+    }
+
+    private fun startHeartRateService() {
+        val service = Intent(this, HeartRateService::class.java)
+
+        startService(service)
+    }
+
+    private fun sendUserToMonitoringScreen() {
+        val activity = Intent(this, MonitoringActivity::class.java)
+
+        startActivity(activity)
     }
 
     private fun setBtnSettingPermissionListener() {
         binding.btnSettingPermission.setOnClickListener {
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-            }
-            startActivity(intent)
+            sendUserToPermissionSettingScreen()
         }
+    }
+
+    private fun sendUserToPermissionSettingScreen() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+        }
+
+        startActivity(intent)
     }
 
     private fun requestPermission() {

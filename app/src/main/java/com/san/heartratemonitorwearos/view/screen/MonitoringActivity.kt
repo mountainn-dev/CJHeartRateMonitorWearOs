@@ -2,11 +2,13 @@ package com.san.heartratemonitorwearos.view.screen
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
 import com.san.heartratemonitorwearos.service.HeartRateService
 
-class MonitoringActivity : AppCompatActivity() {
+class MonitoringActivity : ComponentActivity() {
     private lateinit var binding: ActivityMonitoringBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,8 +25,20 @@ class MonitoringActivity : AppCompatActivity() {
 
     private fun setBtnEndMonitoringListener() {
         binding.btnEndMonitoring.setOnClickListener {
-            val intent = Intent(this, HeartRateService::class.java)
-            stopService(intent)
+            stopHeartRateService()
+            finish()
         }
+    }
+
+    private fun stopHeartRateService() {
+        val service = Intent(this, HeartRateService::class.java)
+
+        stopService(service)
+    }
+
+    private fun sendUserToHomeScreen() {
+        val activity = Intent(this, HomeActivity::class.java)
+
+        startActivity(activity)
     }
 }

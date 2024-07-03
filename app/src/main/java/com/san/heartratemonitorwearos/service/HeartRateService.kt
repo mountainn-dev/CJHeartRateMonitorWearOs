@@ -12,10 +12,12 @@ import android.hardware.SensorManager
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.TaskStackBuilder
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.san.heartratemonitorwearos.R
+import com.san.heartratemonitorwearos.view.screen.HomeActivity
 import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +32,7 @@ class HeartRateService : Service(), SensorEventListener {
     private var heartRateSensor: Sensor? = null
     private lateinit var dataClient: DataClient
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
+    private var serviceRunning = false
 
     override fun onCreate() {
         super.onCreate()
@@ -39,10 +42,14 @@ class HeartRateService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        heartRateSensor?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL).also {
-                if (it) startForeground(NOTIFICATION_ID, createNotification())
+        if (!serviceRunning) {
+            heartRateSensor?.let {
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL).also {
+                    if (it) startForeground(NOTIFICATION_ID, createNotification())
+                }
             }
+
+            serviceRunning = true
         }
         return START_STICKY
     }
@@ -50,6 +57,7 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
+        serviceRunning = false
         scope.cancel()
     }
 
@@ -76,9 +84,9 @@ class HeartRateService : Service(), SensorEventListener {
         withContext(Dispatchers.IO) {
             try {
                 dataClient.putDataItem(request)
-                Log.d("HeartRateService", "Heart rate sent: $heartRate")
+                Log.d("HeartRateService", "심박수: $heartRate")
             } catch (e: Exception) {
-                Log.e("HeartRateService", "Error sending heart rate", e)
+                Log.e("HeartRateService", e.toString())
             }
         }
     }
@@ -97,15 +105,28 @@ class HeartRateService : Service(), SensorEventListener {
 
         val notificationIntent = Intent(this, MonitoringActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE
+            this, 0, notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle(NOTIFICATION_TITLE)
             .setContentText(NOTIFICATION_CONTENT)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(pendingIntent())
             .build()
+    }
+
+    private fun pendingIntent(): PendingIntent? {
+        val intent = Intent(this@HeartRateService, MonitoringActivity::class.java).apply {
+            flags =  Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        return TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(Intent(this@HeartRateService, HomeActivity::class.java))
+            addNextIntent(intent) // Use the intent with flags
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
     }
 
     companion object {

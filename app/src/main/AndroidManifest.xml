@@ -21,11 +21,13 @@
 
         <activity
             android:name=".view.screen.MonitoringActivity"
-            android:exported="true"
+            android:exported="false"
+            android:launchMode="singleTop"
             android:taskAffinity="" />
         <activity
             android:name=".view.screen.HomeActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
