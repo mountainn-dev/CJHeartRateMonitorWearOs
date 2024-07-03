@@ -13,9 +13,12 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import com.san.heartratemonitorwearos.Const
 import com.san.heartratemonitorwearos.R
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
 import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
@@ -32,7 +35,7 @@ class HeartRateService : Service(), SensorEventListener {
     private var heartRateSensor: Sensor? = null
     private lateinit var dataClient: DataClient
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
-    private var serviceRunning = false
+    private val broadCastIntent = Intent(Const.TAG_BROADCAST)
 
     override fun onCreate() {
         super.onCreate()
@@ -66,30 +69,13 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val heartRate = event.values[0].toInt()
-            scope.launch {
-                sendHeartRate(heartRate)
-            }
+            Log.d("heartrate", heartRate.toString())
+            broadCastIntent.putExtra("heartRate", heartRate)
+            sendBroadcast(broadCastIntent)
         }
     }
 
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        // Handle accuracy changes if needed
-    }
-
-    private suspend fun sendHeartRate(heartRate: Int) {
-        val request = PutDataMapRequest.create("/heartrate").apply {
-            dataMap.putInt("heartrate", heartRate)
-        }.asPutDataRequest().setUrgent()
-
-        withContext(Dispatchers.IO) {
-            try {
-                dataClient.putDataItem(request)
-                Log.d("HeartRateService", "심박수: $heartRate")
-            } catch (e: Exception) {
-                Log.e("HeartRateService", e.toString())
-            }
-        }
-    }
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
     private fun createNotification(): android.app.Notification {
         val channelId = "heart_rate_channel"
@@ -133,5 +119,6 @@ class HeartRateService : Service(), SensorEventListener {
         private const val NOTIFICATION_ID = 1
         private const val NOTIFICATION_TITLE = "CJ 미래 기술 챌린지"
         private const val NOTIFICATION_CONTENT = "심박수 감지중"
+        private var serviceRunning = false
     }
 }
