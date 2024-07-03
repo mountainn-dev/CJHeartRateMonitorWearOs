@@ -1,12 +1,12 @@
 package com.san.heartratemonitorwearos.view.screen
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,32 +22,32 @@ class HomeActivity : ComponentActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initListener()
+        initListener(this)
         requestPermission()
     }
     
-    private fun initListener() {
-        setBtnStartMonitoringListener()
+    private fun initListener(activity: Activity) {
+        setBtnStartMonitoringListener(activity)
         setBtnSettingPermissionListener()
     }
 
-    private fun setBtnStartMonitoringListener() {
+    private fun setBtnStartMonitoringListener(activity: Activity) {
         binding.btnStartMonitoring.setOnClickListener {
-            startHeartRateService()
-            sendUserToMonitoringScreen()
+            startHeartRateService(activity)
+            sendUserToMonitoringScreen(activity)
         }
     }
 
-    private fun startHeartRateService() {
-        val service = Intent(this, HeartRateService::class.java)
+    private fun startHeartRateService(activity: Activity) {
+        val intent = Intent(activity, HeartRateService::class.java)
 
-        startService(service)
+        startService(intent)
     }
 
-    private fun sendUserToMonitoringScreen() {
-        val activity = Intent(this, MonitoringActivity::class.java)
+    private fun sendUserToMonitoringScreen(activity: Activity) {
+        val intent = Intent(activity, MonitoringActivity::class.java)
 
-        startActivity(activity)
+        startActivity(intent)
     }
 
     private fun setBtnSettingPermissionListener() {
@@ -72,9 +72,12 @@ class HomeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        checkPermission(this)
+    }
 
+    private fun checkPermission(activity: Activity) {
         if (ContextCompat.checkSelfPermission(
-                this,
+                activity,
                 Manifest.permission.BODY_SENSORS
             ) != PackageManager.PERMISSION_GRANTED
         ) {

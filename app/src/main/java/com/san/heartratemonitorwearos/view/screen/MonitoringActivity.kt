@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import com.san.heartratemonitorwearos.Const
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
@@ -37,16 +36,18 @@ class MonitoringActivity : ComponentActivity() {
     }
 
     private fun stopHeartRateService(activity: Activity) {
-        val service = Intent(activity, HeartRateService::class.java)
+        val intent = Intent(activity, HeartRateService::class.java)
 
-        stopService(service)
+        stopService(intent)
     }
 
     private fun initBroadCastReceiver() {
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                if (intent.action == Const.TAG_BROADCAST) {
-                    binding.txtHeartRate.text = intent.getIntExtra("heartRate", 0).toString()
+                if (intent.action == Const.ACTION_HEART_RATE_BROAD_CAST) {
+                    binding.txtHeartRate.text = intent.getIntExtra(
+                        Const.TAG_HEART_RATE_INTENT, 0
+                    ).toString()
                 }
             }
         }
@@ -54,7 +55,7 @@ class MonitoringActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        registerReceiver(receiver, IntentFilter(Const.TAG_BROADCAST), RECEIVER_NOT_EXPORTED)
+        registerReceiver(receiver, IntentFilter(Const.ACTION_HEART_RATE_BROAD_CAST), RECEIVER_NOT_EXPORTED)
     }
 
     override fun onPause() {

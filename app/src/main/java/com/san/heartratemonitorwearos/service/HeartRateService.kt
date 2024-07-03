@@ -13,10 +13,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.san.heartratemonitorwearos.Const
 import com.san.heartratemonitorwearos.R
@@ -26,8 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class HeartRateService : Service(), SensorEventListener {
 
@@ -35,7 +30,7 @@ class HeartRateService : Service(), SensorEventListener {
     private var heartRateSensor: Sensor? = null
     private lateinit var dataClient: DataClient
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
-    private val broadCastIntent = Intent(Const.TAG_BROADCAST)
+    private val broadCastIntent = Intent(Const.ACTION_HEART_RATE_BROAD_CAST)
 
     override fun onCreate() {
         super.onCreate()
@@ -46,22 +41,19 @@ class HeartRateService : Service(), SensorEventListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (!serviceRunning) {
-            heartRateSensor?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL).also {
-                    if (it) startForeground(NOTIFICATION_ID, createNotification())
-                }
-            }
-
+            registerHeartRateListener(this)
             serviceRunning = true
         }
         return START_STICKY
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        sensorManager.unregisterListener(this)
-        serviceRunning = false
-        scope.cancel()
+    private fun registerHeartRateListener(listener: SensorEventListener) {
+        heartRateSensor?.let {
+            sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL).also {
+                // 리스너 등록 성공한 경우에만 알림 제공
+                if (it) startForeground(NOTIFICATION_ID, createNotification())
+            }
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -69,17 +61,20 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val heartRate = event.values[0].toInt()
-            Log.d("heartrate", heartRate.toString())
-            broadCastIntent.putExtra("heartRate", heartRate)
-            sendBroadcast(broadCastIntent)
+            sendHeartRateBroadCast(heartRate)
         }
+    }
+
+    private fun sendHeartRateBroadCast(heartRate: Int) {
+        broadCastIntent.putExtra(Const.TAG_HEART_RATE_INTENT, heartRate)
+        sendBroadcast(broadCastIntent)
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
     private fun createNotification(): android.app.Notification {
-        val channelId = "heart_rate_channel"
-        val channelName = "Heart Rate Service"
+        val channelId = NOTIFICATION_CHANNEL_ID
+        val channelName = NOTIFICATION_CHANNEL_NAME
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         val channel = NotificationChannel(
@@ -88,12 +83,6 @@ class HeartRateService : Service(), SensorEventListener {
             NotificationManager.IMPORTANCE_DEFAULT
         )
         notificationManager.createNotificationChannel(channel)
-
-        val notificationIntent = Intent(this, MonitoringActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, notificationIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
 
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle(NOTIFICATION_TITLE)
@@ -115,8 +104,17 @@ class HeartRateService : Service(), SensorEventListener {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        sensorManager.unregisterListener(this)
+        serviceRunning = false
+        scope.cancel()
+    }
+
     companion object {
         private const val NOTIFICATION_ID = 1
+        private const val NOTIFICATION_CHANNEL_ID = "heart_rate_channel"
+        private const val NOTIFICATION_CHANNEL_NAME = "Heart Rate Service"
         private const val NOTIFICATION_TITLE = "CJ 미래 기술 챌린지"
         private const val NOTIFICATION_CONTENT = "심박수 감지중"
         private var serviceRunning = false
