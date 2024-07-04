@@ -10,11 +10,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.Wearable
 import com.san.heartratemonitorwearos.Const
 import com.san.heartratemonitorwearos.R
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
@@ -28,7 +25,6 @@ class HeartRateService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
     private var heartRateSensor: Sensor? = null
-    private lateinit var dataClient: DataClient
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val broadCastIntent = Intent(Const.ACTION_HEART_RATE_BROAD_CAST)
 
@@ -36,7 +32,6 @@ class HeartRateService : Service(), SensorEventListener {
         super.onCreate()
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-        dataClient = Wearable.getDataClient(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
