@@ -67,6 +67,12 @@ class HeartRateService : Service(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
+    /**
+     * fun createNotification()
+     *
+     * 포그라운드 서비스 제공을 위한 고정 알림
+     * 심박수가 감지되는 동안 Notification 제공
+     */
     private fun createNotification(): android.app.Notification {
         val channelId = NOTIFICATION_CHANNEL_ID
         val channelName = NOTIFICATION_CHANNEL_NAME
