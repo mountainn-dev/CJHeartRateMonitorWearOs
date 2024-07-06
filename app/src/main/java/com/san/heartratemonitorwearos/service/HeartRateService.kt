@@ -24,6 +24,7 @@ import kotlinx.coroutines.cancel
 class HeartRateService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
+    private lateinit var notificationManager: NotificationManager
     private var heartRateSensor: Sensor? = null
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val broadCastIntent = Intent(Const.ACTION_HEART_RATE_BROAD_CAST)
@@ -31,7 +32,10 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+        notificationManager.createNotificationChannel(heartRateServiceNotificationChannel())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -46,10 +50,43 @@ class HeartRateService : Service(), SensorEventListener {
         heartRateSensor?.let {
             sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL).also {
                 // 리스너 등록 성공한 경우에만 알림 제공
-                if (it) startForeground(NOTIFICATION_ID, createNotification())
+                if (it) startForeground(NOTIFICATION_ID, createForegroundNotification())
             }
         }
     }
+
+    /**
+     * fun createForegroundNotification()
+     *
+     * 포그라운드 서비스 제공을 위한 고정 알림
+     * 심박수가 감지되는 동안 Notification 제공
+     */
+    private fun createForegroundNotification(): android.app.Notification {
+        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(NOTIFICATION_TITLE)
+            .setContentText(FOREGROUND_NOTIFICATION_CONTENT)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setContentIntent(pendingIntent())
+            .build()
+    }
+    
+    private fun pendingIntent(): PendingIntent? {
+        val intent = Intent(this@HeartRateService, MonitoringActivity::class.java).apply {
+            flags =  Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        return TaskStackBuilder.create(this).run {
+            addNextIntentWithParentStack(Intent(this@HeartRateService, HomeActivity::class.java))
+            addNextIntent(intent) // Use the intent with flags
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        }
+    }
+
+    private fun heartRateServiceNotificationChannel() = NotificationChannel(
+        NOTIFICATION_CHANNEL_ID,
+        NOTIFICATION_CHANNEL_NAME,
+        NotificationManager.IMPORTANCE_DEFAULT
+    )
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -67,44 +104,6 @@ class HeartRateService : Service(), SensorEventListener {
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
 
-    /**
-     * fun createNotification()
-     *
-     * 포그라운드 서비스 제공을 위한 고정 알림
-     * 심박수가 감지되는 동안 Notification 제공
-     */
-    private fun createNotification(): android.app.Notification {
-        val channelId = NOTIFICATION_CHANNEL_ID
-        val channelName = NOTIFICATION_CHANNEL_NAME
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        val channel = NotificationChannel(
-            channelId,
-            channelName,
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        notificationManager.createNotificationChannel(channel)
-
-        return NotificationCompat.Builder(this, channelId)
-            .setContentTitle(NOTIFICATION_TITLE)
-            .setContentText(NOTIFICATION_CONTENT)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent())
-            .build()
-    }
-
-    private fun pendingIntent(): PendingIntent? {
-        val intent = Intent(this@HeartRateService, MonitoringActivity::class.java).apply {
-            flags =  Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
-
-        return TaskStackBuilder.create(this).run {
-            addNextIntentWithParentStack(Intent(this@HeartRateService, HomeActivity::class.java))
-            addNextIntent(intent) // Use the intent with flags
-            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        }
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
@@ -117,7 +116,7 @@ class HeartRateService : Service(), SensorEventListener {
         private const val NOTIFICATION_CHANNEL_ID = "heart_rate_channel"
         private const val NOTIFICATION_CHANNEL_NAME = "Heart Rate Service"
         private const val NOTIFICATION_TITLE = "CJ 미래 기술 챌린지"
-        private const val NOTIFICATION_CONTENT = "심박수 감지중"
+        private const val FOREGROUND_NOTIFICATION_CONTENT = "심박수 감지중"
         private var serviceRunning = false
     }
 }
