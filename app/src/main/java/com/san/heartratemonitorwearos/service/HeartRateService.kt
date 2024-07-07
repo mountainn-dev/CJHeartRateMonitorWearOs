@@ -50,7 +50,7 @@ class HeartRateService : Service(), SensorEventListener {
         heartRateSensor?.let {
             sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL).also {
                 // 리스너 등록 성공한 경우에만 알림 제공
-                if (it) startForeground(NOTIFICATION_ID, createForegroundNotification())
+                if (it) startForeground(FOREGROUND_NOTIFICATION_ID, createForegroundNotification())
             }
         }
     }
@@ -93,8 +93,23 @@ class HeartRateService : Service(), SensorEventListener {
             val heartRate = event.values[0].toInt()
             sendHeartRateBroadCast(heartRate)
 
+            if (heartRate > HEART_RATE_THRESHOLD) {
+                notificationManager.notify(THRESHOLD_NOTIFICATION_ID, createThresholdNotification())
+            }
         }
     }
+
+    /**
+     * fun createThresholdNotification()
+     *
+     * 심박수 임계치 초과 알림
+     */
+    private fun createThresholdNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        .setContentTitle(NOTIFICATION_TITLE)
+        .setContentText(THRESHOLD_NOTIFICATION_CONTENT)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setContentIntent(pendingIntent())
+        .build()
 
     private fun sendHeartRateBroadCast(heartRate: Int) {
         broadCastIntent.putExtra(Const.TAG_HEART_RATE_INTENT, heartRate)
@@ -111,13 +126,14 @@ class HeartRateService : Service(), SensorEventListener {
     }
 
     companion object {
-        private const val NOTIFICATION_ID = 1
+        private const val FOREGROUND_NOTIFICATION_ID = 1
+        private const val THRESHOLD_NOTIFICATION_ID = 2
         private const val NOTIFICATION_CHANNEL_ID = "heart_rate_channel"
         private const val NOTIFICATION_CHANNEL_NAME = "Heart Rate Service"
         private const val NOTIFICATION_TITLE = "CJ 심박수 모니터"
         private const val FOREGROUND_NOTIFICATION_CONTENT = "심박수 감지중"
         private const val THRESHOLD_NOTIFICATION_CONTENT = "현재 심박수가 너무 높습니다. 잠시 휴식을 취하세요."
-        private const val HEART_RATE_THRESHOLD = 100
+        private const val HEART_RATE_THRESHOLD = 83
         private var serviceRunning = false
     }
 }
