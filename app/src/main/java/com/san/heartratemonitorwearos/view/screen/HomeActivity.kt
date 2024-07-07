@@ -66,8 +66,10 @@ class HomeActivity : ComponentActivity() {
 
     private fun requestPermission() {
         val requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
-        requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
+        requestPermissionLauncher.launch(arrayOf(
+            Manifest.permission.BODY_SENSORS
+        ))
     }
 
     override fun onResume() {

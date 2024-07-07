@@ -59,17 +59,15 @@ class HeartRateService : Service(), SensorEventListener {
      * fun createForegroundNotification()
      *
      * 포그라운드 서비스 제공을 위한 고정 알림
-     * 심박수가 감지되는 동안 Notification 제공
+     * 심박수가 감지되는 동안 고정 Notification 제공
      */
-    private fun createForegroundNotification(): android.app.Notification {
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(NOTIFICATION_TITLE)
-            .setContentText(FOREGROUND_NOTIFICATION_CONTENT)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent())
-            .build()
-    }
-    
+    private fun createForegroundNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        .setContentTitle(NOTIFICATION_TITLE)
+        .setContentText(FOREGROUND_NOTIFICATION_CONTENT)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setContentIntent(pendingIntent())
+        .build()
+
     private fun pendingIntent(): PendingIntent? {
         val intent = Intent(this@HeartRateService, MonitoringActivity::class.java).apply {
             flags =  Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -94,6 +92,7 @@ class HeartRateService : Service(), SensorEventListener {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val heartRate = event.values[0].toInt()
             sendHeartRateBroadCast(heartRate)
+
         }
     }
 
@@ -115,8 +114,10 @@ class HeartRateService : Service(), SensorEventListener {
         private const val NOTIFICATION_ID = 1
         private const val NOTIFICATION_CHANNEL_ID = "heart_rate_channel"
         private const val NOTIFICATION_CHANNEL_NAME = "Heart Rate Service"
-        private const val NOTIFICATION_TITLE = "CJ 미래 기술 챌린지"
+        private const val NOTIFICATION_TITLE = "CJ 심박수 모니터"
         private const val FOREGROUND_NOTIFICATION_CONTENT = "심박수 감지중"
+        private const val THRESHOLD_NOTIFICATION_CONTENT = "현재 심박수가 너무 높습니다. 잠시 휴식을 취하세요."
+        private const val HEART_RATE_THRESHOLD = 100
         private var serviceRunning = false
     }
 }
