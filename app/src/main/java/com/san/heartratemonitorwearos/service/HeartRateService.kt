@@ -10,11 +10,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.Wearable
 import com.san.heartratemonitorwearos.Const
 import com.san.heartratemonitorwearos.R
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
@@ -27,16 +24,18 @@ import kotlinx.coroutines.cancel
 class HeartRateService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
+    private lateinit var notificationManager: NotificationManager
     private var heartRateSensor: Sensor? = null
-    private lateinit var dataClient: DataClient
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val broadCastIntent = Intent(Const.ACTION_HEART_RATE_BROAD_CAST)
 
     override fun onCreate() {
         super.onCreate()
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-        dataClient = Wearable.getDataClient(this)
+        notificationManager.createNotificationChannel(heartRateServiceNotificationChannel())
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -51,46 +50,23 @@ class HeartRateService : Service(), SensorEventListener {
         heartRateSensor?.let {
             sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL).also {
                 // 리스너 등록 성공한 경우에만 알림 제공
-                if (it) startForeground(NOTIFICATION_ID, createNotification())
+                if (it) startForeground(FOREGROUND_NOTIFICATION_ID, createForegroundNotification())
             }
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
-
-    override fun onSensorChanged(event: SensorEvent?) {
-        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
-            val heartRate = event.values[0].toInt()
-            sendHeartRateBroadCast(heartRate)
-        }
-    }
-
-    private fun sendHeartRateBroadCast(heartRate: Int) {
-        broadCastIntent.putExtra(Const.TAG_HEART_RATE_INTENT, heartRate)
-        sendBroadcast(broadCastIntent)
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
-
-    private fun createNotification(): android.app.Notification {
-        val channelId = NOTIFICATION_CHANNEL_ID
-        val channelName = NOTIFICATION_CHANNEL_NAME
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-        val channel = NotificationChannel(
-            channelId,
-            channelName,
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        notificationManager.createNotificationChannel(channel)
-
-        return NotificationCompat.Builder(this, channelId)
-            .setContentTitle(NOTIFICATION_TITLE)
-            .setContentText(NOTIFICATION_CONTENT)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentIntent(pendingIntent())
-            .build()
-    }
+    /**
+     * fun createForegroundNotification()
+     *
+     * 포그라운드 서비스 제공을 위한 고정 알림
+     * 심박수가 감지되는 동안 고정 Notification 제공
+     */
+    private fun createForegroundNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        .setContentTitle(NOTIFICATION_TITLE)
+        .setContentText(FOREGROUND_NOTIFICATION_CONTENT)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setContentIntent(pendingIntent())
+        .build()
 
     private fun pendingIntent(): PendingIntent? {
         val intent = Intent(this@HeartRateService, MonitoringActivity::class.java).apply {
@@ -104,6 +80,44 @@ class HeartRateService : Service(), SensorEventListener {
         }
     }
 
+    private fun heartRateServiceNotificationChannel() = NotificationChannel(
+        NOTIFICATION_CHANNEL_ID,
+        NOTIFICATION_CHANNEL_NAME,
+        NotificationManager.IMPORTANCE_DEFAULT
+    )
+
+    override fun onBind(intent: Intent?): IBinder? = null
+
+    override fun onSensorChanged(event: SensorEvent?) {
+        if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
+            val heartRate = event.values[0].toInt()
+            sendHeartRateBroadCast(heartRate)
+
+            if (heartRate > HEART_RATE_THRESHOLD) {
+                notificationManager.notify(THRESHOLD_NOTIFICATION_ID, createThresholdNotification())
+            }
+        }
+    }
+
+    /**
+     * fun createThresholdNotification()
+     *
+     * 심박수 임계치 초과 알림
+     */
+    private fun createThresholdNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        .setContentTitle(NOTIFICATION_TITLE)
+        .setContentText(THRESHOLD_NOTIFICATION_CONTENT)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setContentIntent(pendingIntent())
+        .build()
+
+    private fun sendHeartRateBroadCast(heartRate: Int) {
+        broadCastIntent.putExtra(Const.TAG_HEART_RATE_INTENT, heartRate)
+        sendBroadcast(broadCastIntent)
+    }
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
+
     override fun onDestroy() {
         super.onDestroy()
         sensorManager.unregisterListener(this)
@@ -112,11 +126,14 @@ class HeartRateService : Service(), SensorEventListener {
     }
 
     companion object {
-        private const val NOTIFICATION_ID = 1
+        private const val FOREGROUND_NOTIFICATION_ID = 1
+        private const val THRESHOLD_NOTIFICATION_ID = 2
         private const val NOTIFICATION_CHANNEL_ID = "heart_rate_channel"
         private const val NOTIFICATION_CHANNEL_NAME = "Heart Rate Service"
-        private const val NOTIFICATION_TITLE = "CJ 미래 기술 챌린지"
-        private const val NOTIFICATION_CONTENT = "심박수 감지중"
+        private const val NOTIFICATION_TITLE = "CJ 심박수 모니터"
+        private const val FOREGROUND_NOTIFICATION_CONTENT = "심박수 감지중"
+        private const val THRESHOLD_NOTIFICATION_CONTENT = "현재 심박수가 너무 높습니다. 잠시 휴식을 취하세요."
+        private const val HEART_RATE_THRESHOLD = 83
         private var serviceRunning = false
     }
 }

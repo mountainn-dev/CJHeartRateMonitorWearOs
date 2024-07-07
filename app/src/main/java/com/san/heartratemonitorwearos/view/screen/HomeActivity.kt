@@ -66,8 +66,11 @@ class HomeActivity : ComponentActivity() {
 
     private fun requestPermission() {
         val requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
-        requestPermissionLauncher.launch(Manifest.permission.BODY_SENSORS)
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
+        requestPermissionLauncher.launch(arrayOf(
+            Manifest.permission.BODY_SENSORS,
+            Manifest.permission.POST_NOTIFICATIONS
+        ))
     }
 
     override fun onResume() {
@@ -76,14 +79,15 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun checkPermission(activity: Activity) {
-        if (ContextCompat.checkSelfPermission(
-                activity,
-                Manifest.permission.BODY_SENSORS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            binding.llRequestPermission.visibility = View.VISIBLE
-        } else {
+        if (checkPermission(Manifest.permission.BODY_SENSORS, activity)
+            && checkPermission(Manifest.permission.POST_NOTIFICATIONS, activity)) {
             binding.llRequestPermission.visibility = View.GONE
+        } else {
+            binding.llRequestPermission.visibility = View.VISIBLE
         }
     }
+
+    private fun checkPermission(
+        permission: String, activity: Activity
+    ) = ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
 }
