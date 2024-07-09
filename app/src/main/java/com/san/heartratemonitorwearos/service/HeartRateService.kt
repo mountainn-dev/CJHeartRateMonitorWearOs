@@ -10,6 +10,11 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.IBinder
+import android.os.PowerManager
+import android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP
+import android.os.PowerManager.PARTIAL_WAKE_LOCK
+import android.os.PowerManager.WakeLock
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
 import com.san.heartratemonitorwearos.Const
@@ -33,43 +38,50 @@ class HeartRateService : Service(), SensorEventListener {
 
     override fun onCreate() {
         super.onCreate()
+
+        initSensor()
+        initNotification()
+    }
+
+    private fun initSensor() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+    }
+
+    private fun initNotification() {
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(heartRateServiceNotificationChannel())
-        initNotificationBuilder()
+
+        // 포그라운드, 임계치 관련 알림 작성
+        foregroundNotificationBuilder = foregroundNotificationBuilder()
+        thresholdNotificationBuilder = thresholdNotificationBuilder()
     }
 
     private fun heartRateServiceNotificationChannel() = NotificationChannel(
         NOTIFICATION_CHANNEL_ID,
         NOTIFICATION_CHANNEL_NAME,
-        NotificationManager.IMPORTANCE_DEFAULT
+        NotificationManager.IMPORTANCE_HIGH
     )
 
-    private fun initNotificationBuilder() {
-        foregroundNotificationBuilder = createForegroundNotification()
-        thresholdNotificationBuilder = createThresholdNotification()
-    }
-
     /**
-     * fun createForegroundNotification()
+     * fun foregroundNotificationBuilder()
      *
      * 포그라운드 서비스 제공을 위한 고정 알림
      * 심박수가 감지되는 동안 고정 Notification 제공
      */
-    private fun createForegroundNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+    private fun foregroundNotificationBuilder() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
         .setContentTitle(NOTIFICATION_TITLE)
         .setContentText(FOREGROUND_NOTIFICATION_CONTENT)
         .setSmallIcon(R.mipmap.ic_launcher)
         .setContentIntent(pendingIntent())
 
     /**
-     * fun createThresholdNotification()
+     * fun thresholdNotificationBuilder()
      *
      * 심박수 임계치 초과 알림
      */
-    private fun createThresholdNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+    private fun thresholdNotificationBuilder() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
         .setContentTitle(NOTIFICATION_TITLE)
         .setContentText(THRESHOLD_NOTIFICATION_CONTENT)
         .setSmallIcon(R.mipmap.ic_launcher)
@@ -102,9 +114,9 @@ class HeartRateService : Service(), SensorEventListener {
 
     private fun registerHeartRateListener(listener: SensorEventListener) {
         heartRateSensor?.let {
-            sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL).also {
-                // 리스너 등록 성공한 경우에만 알림 제공
-                if (it) startForeground(FOREGROUND_NOTIFICATION_ID, createForegroundNotification().build())
+            sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI).also {
+                // 리스너 등록 성공 이후 포그라운드 서비스 제공
+                if (it) startForeground(FOREGROUND_NOTIFICATION_ID, foregroundNotificationBuilder.build())
             }
         }
     }
@@ -114,10 +126,12 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val heartRate = event.values[0].toInt()
+            Log.d("heartRate", heartRate.toString())
             sendHeartRateBroadCast(heartRate)
 
             if (heartRate > HEART_RATE_THRESHOLD) {
-                notificationManager.notify(THRESHOLD_NOTIFICATION_ID, createThresholdNotification().build())
+                Log.d("threshold", "over")
+                notificationManager.notify(THRESHOLD_NOTIFICATION_ID, thresholdNotificationBuilder.build())
             }
         }
     }
