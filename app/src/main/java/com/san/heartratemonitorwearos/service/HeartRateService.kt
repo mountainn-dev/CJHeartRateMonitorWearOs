@@ -9,11 +9,10 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.net.Uri
 import android.os.IBinder
 import android.os.PowerManager
-import android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP
-import android.os.PowerManager.PARTIAL_WAKE_LOCK
-import android.os.PowerManager.WakeLock
+import android.provider.Settings
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
@@ -39,18 +38,21 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onCreate() {
         super.onCreate()
 
+        initManagers()
         initSensor()
         initNotification()
     }
 
-    private fun initSensor() {
+    private fun initManagers() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    }
 
+    private fun initSensor() {
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
     }
 
     private fun initNotification() {
-        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(heartRateServiceNotificationChannel())
 
         // 포그라운드, 임계치 관련 알림 작성
@@ -126,11 +128,9 @@ class HeartRateService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val heartRate = event.values[0].toInt()
-            Log.d("heartRate", heartRate.toString())
             sendHeartRateBroadCast(heartRate)
 
             if (heartRate > HEART_RATE_THRESHOLD) {
-                Log.d("threshold", "over")
                 notificationManager.notify(THRESHOLD_NOTIFICATION_ID, thresholdNotificationBuilder.build())
             }
         }
