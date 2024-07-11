@@ -29,6 +29,7 @@ class HomeActivity : ComponentActivity() {
     private fun initListener(activity: Activity) {
         setBtnStartMonitoringListener(activity)
         setBtnSettingPermissionListener()
+        setBtnSettingBatterySaverModeListener()
     }
 
     private fun setBtnStartMonitoringListener(activity: Activity) {
@@ -64,6 +65,25 @@ class HomeActivity : ComponentActivity() {
         startActivity(intent)
     }
 
+    private fun setBtnSettingBatterySaverModeListener() {
+        binding.btnSettingBatterySaverMode.setOnClickListener {
+            sendUserToBatterySaverSettingScreen()
+        }
+    }
+
+    /**
+     * fun sendUserToBatterySaverSettingScreen()
+     *
+     * Doze mode 에서도 포그라운드 서비스 기능 실시간 제공을 위한 절전 모드 관련 설정
+     * 절전 모드 및 절전 상태 해제
+     * 실시간 통신을 위해서는 필수이나, 서비스 관련 필수 설정은 아니기 때문에 optional
+     */
+    private fun sendUserToBatterySaverSettingScreen() {
+        val intent = Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS)
+
+        startActivity(intent)
+    }
+
     private fun requestPermission() {
         val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
@@ -75,17 +95,32 @@ class HomeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        checkPermission(this)
+        checkEssentialSettings(this)
     }
 
-    private fun checkPermission(activity: Activity) {
-        if (checkPermission(Manifest.permission.BODY_SENSORS, activity)
-            && checkPermission(Manifest.permission.POST_NOTIFICATIONS, activity)) {
+    private fun checkEssentialSettings(activity: Activity) {
+        if (essentialSettings(activity)) {
             binding.llRequestPermission.visibility = View.GONE
+            binding.btnStartMonitoring.visibility = View.VISIBLE
         } else {
+            binding.btnStartMonitoring.visibility = View.GONE
             binding.llRequestPermission.visibility = View.VISIBLE
         }
     }
+
+    /**
+     * fun essentialSettings()
+     *
+     * 필수 설정 확인
+     * 1. 센서 접근 권한
+     * 2. 알림 권한
+     */
+    private fun essentialSettings(activity: Activity) =
+        checkPermission(
+            Manifest.permission.BODY_SENSORS, activity
+        ) && checkPermission(
+            Manifest.permission.POST_NOTIFICATIONS, activity
+        )
 
     private fun checkPermission(
         permission: String, activity: Activity

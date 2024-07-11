@@ -25,49 +25,71 @@ class HeartRateService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
     private lateinit var notificationManager: NotificationManager
+    private lateinit var foregroundNotificationBuilder: NotificationCompat.Builder
+    private lateinit var thresholdNotificationBuilder: NotificationCompat.Builder
     private var heartRateSensor: Sensor? = null
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private val broadCastIntent = Intent(Const.ACTION_HEART_RATE_BROAD_CAST)
 
     override fun onCreate() {
         super.onCreate()
+
+        initManagers()
+        initSensor()
+        initNotification()
+    }
+
+    private fun initManagers() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    }
 
+    private fun initSensor() {
         heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
+    }
+
+    private fun initNotification() {
         notificationManager.createNotificationChannel(heartRateServiceNotificationChannel())
+
+        // 포그라운드, 임계치 관련 알림 작성
+        foregroundNotificationBuilder = foregroundNotificationBuilder()
+        thresholdNotificationBuilder = thresholdNotificationBuilder()
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!serviceRunning) {
-            registerHeartRateListener(this)
-            serviceRunning = true
-        }
-        return START_STICKY
-    }
-
-    private fun registerHeartRateListener(listener: SensorEventListener) {
-        heartRateSensor?.let {
-            sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_NORMAL).also {
-                // 리스너 등록 성공한 경우에만 알림 제공
-                if (it) startForeground(FOREGROUND_NOTIFICATION_ID, createForegroundNotification())
-            }
-        }
-    }
+    private fun heartRateServiceNotificationChannel() = NotificationChannel(
+        NOTIFICATION_CHANNEL_ID,
+        NOTIFICATION_CHANNEL_NAME,
+        NotificationManager.IMPORTANCE_HIGH
+    )
 
     /**
-     * fun createForegroundNotification()
+     * fun foregroundNotificationBuilder()
      *
      * 포그라운드 서비스 제공을 위한 고정 알림
      * 심박수가 감지되는 동안 고정 Notification 제공
      */
-    private fun createForegroundNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+    private fun foregroundNotificationBuilder() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
         .setContentTitle(NOTIFICATION_TITLE)
         .setContentText(FOREGROUND_NOTIFICATION_CONTENT)
         .setSmallIcon(R.mipmap.ic_launcher)
         .setContentIntent(pendingIntent())
-        .build()
 
+    /**
+     * fun thresholdNotificationBuilder()
+     *
+     * 심박수 임계치 초과 알림
+     */
+    private fun thresholdNotificationBuilder() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        .setContentTitle(NOTIFICATION_TITLE)
+        .setContentText(THRESHOLD_NOTIFICATION_CONTENT)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setContentIntent(pendingIntent())
+
+    /**
+     * fun pendingIntent()
+     *
+     * 포그라운드 알림 및 임계치 초과 알림 누를 경우 모니터링 화면으로 안내
+     */
     private fun pendingIntent(): PendingIntent? {
         val intent = Intent(this@HeartRateService, MonitoringActivity::class.java).apply {
             flags =  Intent.FLAG_ACTIVITY_NEW_TASK and Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -80,11 +102,22 @@ class HeartRateService : Service(), SensorEventListener {
         }
     }
 
-    private fun heartRateServiceNotificationChannel() = NotificationChannel(
-        NOTIFICATION_CHANNEL_ID,
-        NOTIFICATION_CHANNEL_NAME,
-        NotificationManager.IMPORTANCE_DEFAULT
-    )
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!serviceRunning) {
+            registerHeartRateListener(this)
+            serviceRunning = true
+        }
+        return START_STICKY
+    }
+
+    private fun registerHeartRateListener(listener: SensorEventListener) {
+        heartRateSensor?.let {
+            sensorManager.registerListener(listener, it, SensorManager.SENSOR_DELAY_UI).also {
+                // 리스너 등록 성공 이후 포그라운드 서비스 제공
+                if (it) startForeground(FOREGROUND_NOTIFICATION_ID, foregroundNotificationBuilder.build())
+            }
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -94,22 +127,10 @@ class HeartRateService : Service(), SensorEventListener {
             sendHeartRateBroadCast(heartRate)
 
             if (heartRate > HEART_RATE_THRESHOLD) {
-                notificationManager.notify(THRESHOLD_NOTIFICATION_ID, createThresholdNotification())
+                notificationManager.notify(THRESHOLD_NOTIFICATION_ID, thresholdNotificationBuilder.build())
             }
         }
     }
-
-    /**
-     * fun createThresholdNotification()
-     *
-     * 심박수 임계치 초과 알림
-     */
-    private fun createThresholdNotification() = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-        .setContentTitle(NOTIFICATION_TITLE)
-        .setContentText(THRESHOLD_NOTIFICATION_CONTENT)
-        .setSmallIcon(R.mipmap.ic_launcher)
-        .setContentIntent(pendingIntent())
-        .build()
 
     private fun sendHeartRateBroadCast(heartRate: Int) {
         broadCastIntent.putExtra(Const.TAG_HEART_RATE_INTENT, heartRate)
