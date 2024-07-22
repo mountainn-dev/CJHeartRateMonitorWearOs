@@ -13,7 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.san.heartratemonitorwearos.BuildConfig
 import com.san.heartratemonitorwearos.databinding.ActivityHomeBinding
-import com.san.heartratemonitorwearos.service.HeartRateService
+import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
 
 class HomeActivity : ComponentActivity() {
     private lateinit var binding: ActivityHomeBinding
@@ -40,7 +40,7 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun startHeartRateService(activity: Activity) {
-        val intent = Intent(activity, HeartRateService::class.java)
+        val intent = Intent(activity, HeartRateSensorService::class.java)
 
         startService(intent)
     }

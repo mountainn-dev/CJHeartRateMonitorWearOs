@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
         <service
-            android:name="com.san.heartratemonitorwearos.data.source.local.HeartRateService"
+            android:name="com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService"
             android:exported="false"
             android:foregroundServiceType="health">
         </service>
