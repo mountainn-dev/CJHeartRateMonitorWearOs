@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import com.san.heartratemonitorwearos.BuildConfig
 import com.san.heartratemonitorwearos.databinding.ActivityHomeBinding
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
+import com.san.heartratemonitorwearos.domain.utils.Utils
 
 class HomeActivity : ComponentActivity() {
     private lateinit var binding: ActivityHomeBinding
@@ -119,17 +120,13 @@ class HomeActivity : ComponentActivity() {
      * 3. 위치 권한
      */
     private fun essentialSettings(activity: Activity) =
-        checkPermission(
+        Utils.checkPermission(
             Manifest.permission.BODY_SENSORS, activity
-        ) && checkPermission(
+        ) && Utils.checkPermission(
             Manifest.permission.POST_NOTIFICATIONS, activity
-        ) && checkPermission(
+        ) && Utils.checkPermission(
             Manifest.permission.ACCESS_FINE_LOCATION, activity
-        ) && checkPermission(
+        ) && Utils.checkPermission(
             Manifest.permission.ACCESS_COARSE_LOCATION, activity
         )
-
-    private fun checkPermission(
-        permission: String, activity: Activity
-    ) = ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
 }

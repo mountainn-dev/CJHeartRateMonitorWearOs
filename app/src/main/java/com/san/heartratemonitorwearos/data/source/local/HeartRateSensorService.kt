@@ -15,17 +15,22 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
 import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.R
+import com.san.heartratemonitorwearos.data.entity.HeartRateEntity
+import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
+import com.san.heartratemonitorwearos.domain.utils.Utils
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
 import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class HeartRateSensorService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
     private lateinit var notificationManager: NotificationManager
+    private lateinit var dataService: HeartRateService
     private lateinit var foregroundNotificationBuilder: NotificationCompat.Builder
     private lateinit var thresholdNotificationBuilder: NotificationCompat.Builder
     private var heartRateSensor: Sensor? = null
@@ -37,6 +42,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
         super.onCreate()
 
         initManagers()
+        initDataService()
         initSensor()
         initNotification()
     }
@@ -44,6 +50,10 @@ class HeartRateSensorService : Service(), SensorEventListener {
     private fun initManagers() {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    }
+
+    private fun initDataService() {
+        dataService = Utils.getRetrofit().create(HeartRateService::class.java)
     }
 
     private fun initSensor() {
@@ -133,10 +143,10 @@ class HeartRateSensorService : Service(), SensorEventListener {
         if (event?.sensor?.type == Sensor.TYPE_HEART_RATE) {
             val heartRate = event.values[0].toInt()
             sendHeartRateBroadCast(heartRate)
-            heartRateData.add(heartRate)
-
             Log.d("heartRate", heartRate.toString())
 
+            heartRateData.add(heartRate)
+            if (heartRateData.size >= MAX_HEART_RATE_DATA_COUNT) sendHeartRateData()
             if (heartRate > HEART_RATE_THRESHOLD) {
                 notificationManager.notify(THRESHOLD_NOTIFICATION_ID, thresholdNotificationBuilder.build())
             }
@@ -148,8 +158,22 @@ class HeartRateSensorService : Service(), SensorEventListener {
         sendBroadcast(broadCastIntent)
     }
 
-    private suspend fun postHeartRateData() {
+    private fun sendHeartRateData() {
+        scope.launch {
+            setHeartRate(avgHeartRateData())
+            heartRateData.clear()
+        }
+    }
 
+    private fun avgHeartRateData() = heartRateData.filter { it != 0 }.average().toInt()
+
+    private suspend fun setHeartRate(heartRate: Int) {
+        try {
+            dataService.setHeartRate(HeartRateEntity(heartRate))
+            Log.d("setHeartRate", "success")
+        } catch (e: Exception) {
+            Log.d("setHeartRateException", e.message ?: e.toString())
+        }
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) { }
@@ -170,6 +194,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
         private const val FOREGROUND_NOTIFICATION_CONTENT = "심박수 감지중"
         private const val THRESHOLD_NOTIFICATION_CONTENT = "현재 심박수가 너무 높습니다. 잠시 휴식을 취하세요."
         private const val HEART_RATE_THRESHOLD = 100
+        private const val MAX_HEART_RATE_DATA_COUNT = 60
         private var serviceRunning = false
     }
 }

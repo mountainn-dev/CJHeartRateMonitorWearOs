@@ -1,16 +1,21 @@
 package com.san.heartratemonitorwearos.view.screen
 
+import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.wearable.Wearable
 import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImpl
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
@@ -32,7 +37,7 @@ class MonitoringActivity : ComponentActivity() {
         binding = ActivityMonitoringBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0MTIxMiIsImlzcyI6ImVsbGlvdHRfa2ltIiwiZXhwIjoxNzUzMjg4MDA5LCJpYXQiOjE3MjE3NTIwMDl9.8t8FqLRkeUO1fWTLO9Ucbc20GwusxEhx7CmOWYgTktg").create(HeartRateService::class.java))
+        val repo = HeartRateRepositoryImpl(Utils.getRetrofit().create(HeartRateService::class.java))
         viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo)).get(MonitoringViewModelImpl::class.java)
 
         initObserver(this)
@@ -55,6 +60,7 @@ class MonitoringActivity : ComponentActivity() {
 
     private fun initListener(activity: Activity) {
         setBtnEndMonitoringListener(activity)
+        setBtnUrgentListener(activity)
     }
 
     private fun setBtnEndMonitoringListener(activity: Activity) {
@@ -70,12 +76,25 @@ class MonitoringActivity : ComponentActivity() {
         stopService(intent)
     }
 
+    private fun setBtnUrgentListener(activity: Activity) {
+        binding.btnUrgent.setOnClickListener {
+            val task = LocationServices.getFusedLocationProviderClient(activity)
+
+            if (Utils.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, activity)
+                && Utils.checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, activity)) {
+                task.lastLocation.addOnSuccessListener {
+                    viewModel.urgent(it)
+                    Log.d("location", "${it.latitude}, ${it.longitude}")
+                }
+            }
+        }
+    }
+
     private fun initBroadCastReceiver() {
         receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Const.ACTION_HEART_RATE_BROAD_CAST) {
                     val data = intent.getIntExtra(Const.TAG_HEART_RATE_INTENT, 0)
-                    viewModel.addHeartRateData(data)
                     binding.txtHeartRate.text = data.toString()
                 }
             }

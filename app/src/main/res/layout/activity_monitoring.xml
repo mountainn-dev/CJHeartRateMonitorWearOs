@@ -40,4 +40,11 @@
         android:layout_margin="@dimen/margin_padding_small"
         android:text="@string/btn_end_monitoring"/>
 
+    <Button
+        android:id="@+id/btnUrgent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_urgent"
+        android:textColor="@color/red"/>
+
 </LinearLayout>
