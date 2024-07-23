@@ -89,7 +89,9 @@ class HomeActivity : ComponentActivity() {
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
         requestPermissionLauncher.launch(arrayOf(
             Manifest.permission.BODY_SENSORS,
-            Manifest.permission.POST_NOTIFICATIONS
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ))
     }
 
@@ -114,12 +116,17 @@ class HomeActivity : ComponentActivity() {
      * 필수 설정 확인
      * 1. 센서 접근 권한
      * 2. 알림 권한
+     * 3. 위치 권한
      */
     private fun essentialSettings(activity: Activity) =
         checkPermission(
             Manifest.permission.BODY_SENSORS, activity
         ) && checkPermission(
             Manifest.permission.POST_NOTIFICATIONS, activity
+        ) && checkPermission(
+            Manifest.permission.ACCESS_FINE_LOCATION, activity
+        ) && checkPermission(
+            Manifest.permission.ACCESS_COARSE_LOCATION, activity
         )
 
     private fun checkPermission(
