@@ -11,15 +11,16 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import com.san.heartratemonitorwearos.Const
+import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImpl
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
-import com.san.heartratemonitorwearos.domain.Utils
-import com.san.heartratemonitorwearos.viewmodel.MonitoringViewModel
-import com.san.heartratemonitorwearos.viewmodelfactory.MonitoringViewModelFactory
-import com.san.heartratemonitorwearos.viewmodelimpl.MonitoringViewModelImpl
+import com.san.heartratemonitorwearos.domain.utils.Utils
+import com.san.heartratemonitorwearos.domain.viewmodel.MonitoringViewModel
+import com.san.heartratemonitorwearos.domain.viewmodelfactory.MonitoringViewModelFactory
+import com.san.heartratemonitorwearos.domain.viewmodelimpl.MonitoringViewModelImpl
+import kotlin.system.exitProcess
 
 class MonitoringActivity : ComponentActivity() {
     private lateinit var binding: ActivityMonitoringBinding
@@ -89,6 +90,14 @@ class MonitoringActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         unregisterReceiver(receiver)
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        val startMain = Intent(Intent.ACTION_MAIN)
+        startMain.addCategory(Intent.CATEGORY_HOME)
+        startMain.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(startMain)
     }
 
     companion object {

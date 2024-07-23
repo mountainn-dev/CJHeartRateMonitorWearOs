@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.domain
+package com.san.heartratemonitorwearos.domain.utils
 
 import com.san.heartratemonitorwearos.data.source.remote.interceptor.HeaderInterceptor
 import okhttp3.OkHttpClient

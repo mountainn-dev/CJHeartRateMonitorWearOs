@@ -1,9 +1,9 @@
-package com.san.heartratemonitorwearos.viewmodelfactory
+package com.san.heartratemonitorwearos.domain.viewmodelfactory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.san.heartratemonitorwearos.data.repository.HeartRateRepository
-import com.san.heartratemonitorwearos.viewmodelimpl.MonitoringViewModelImpl
+import com.san.heartratemonitorwearos.domain.viewmodelimpl.MonitoringViewModelImpl
 
 class MonitoringViewModelFactory(
     private val repository: HeartRateRepository
