@@ -13,7 +13,7 @@ class HeartRateRepositoryImpl(
             service.setHeartRate(heartRate)
             return Result.success(true)
         } catch (e: Exception) {
-            Log.d("setHeartRateException", e.toString())
+            Log.d("setHeartRateException", e.message ?: e.toString())
             return Result.error(e)
         }
     }

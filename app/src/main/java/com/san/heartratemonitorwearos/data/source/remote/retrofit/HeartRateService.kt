@@ -7,6 +7,6 @@ import retrofit2.http.POST
 interface HeartRateService {
     @POST("/setHeartRate")
     suspend fun setHeartRate(
-        @Body heartRate: Int
+        @Body data: Int
     ): ServiceResponse<String?>
 }

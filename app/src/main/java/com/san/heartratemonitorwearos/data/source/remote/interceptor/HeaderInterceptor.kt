@@ -15,6 +15,6 @@ class HeaderInterceptor(
     }
 
     companion object {
-        private const val ID_TOKEN = "id token"
+        private const val ID_TOKEN = "Authorization"
     }
 }
