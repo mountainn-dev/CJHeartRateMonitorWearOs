@@ -7,30 +7,33 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.wearable.Wearable
-import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImpl
-import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
+import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
+import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.domain.utils.Utils
 import com.san.heartratemonitorwearos.domain.viewmodel.MonitoringViewModel
 import com.san.heartratemonitorwearos.domain.viewmodelfactory.MonitoringViewModelFactory
 import com.san.heartratemonitorwearos.domain.viewmodelimpl.MonitoringViewModelImpl
-import kotlin.system.exitProcess
 
 class MonitoringActivity : ComponentActivity() {
     private lateinit var binding: ActivityMonitoringBinding
     private lateinit var viewModel: MonitoringViewModel
     private lateinit var receiver: BroadcastReceiver
+    private lateinit var locationClient: FusedLocationProviderClient
+    private lateinit var locationRequest: LocationRequest
+    private lateinit var locationCallback: LocationCallback
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +46,7 @@ class MonitoringActivity : ComponentActivity() {
         initObserver(this)
         initListener(this)
         initBroadCastReceiver()
+        initLocationSetting(this)
     }
 
     private fun initObserver(activity: Activity) {
@@ -78,13 +82,14 @@ class MonitoringActivity : ComponentActivity() {
 
     private fun setBtnUrgentListener(activity: Activity) {
         binding.btnUrgent.setOnClickListener {
-            val task = LocationServices.getFusedLocationProviderClient(activity)
-
             if (Utils.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, activity)
                 && Utils.checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, activity)) {
-                task.lastLocation.addOnSuccessListener {
-                    viewModel.urgent(it)
-                    Log.d("location", "${it.latitude}, ${it.longitude}")
+                locationClient.lastLocation.addOnSuccessListener {
+                    if (it != null) {
+                        viewModel.urgent(it)
+                    } else {
+                        locationClient.requestLocationUpdates(locationRequest, locationCallback, null)
+                    }
                 }
             }
         }
@@ -98,6 +103,18 @@ class MonitoringActivity : ComponentActivity() {
                     binding.txtHeartRate.text = data.toString()
                 }
             }
+        }
+    }
+
+    private fun initLocationSetting(activity: Activity) {
+        locationClient = LocationServices.getFusedLocationProviderClient(activity)
+        locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {}
         }
     }
 
