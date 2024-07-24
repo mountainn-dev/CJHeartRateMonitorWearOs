@@ -11,4 +11,5 @@
     <string name="present_heart_rate">현재 심박수</string>
     <string name="colon">:</string>
     <string name="btn_end_monitoring">근무 종료</string>
+    <string name="btn_urgent">긴급 신고</string>
 </resources>

@@ -13,7 +13,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.san.heartratemonitorwearos.BuildConfig
 import com.san.heartratemonitorwearos.databinding.ActivityHomeBinding
-import com.san.heartratemonitorwearos.service.HeartRateService
+import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
+import com.san.heartratemonitorwearos.domain.utils.Utils
 
 class HomeActivity : ComponentActivity() {
     private lateinit var binding: ActivityHomeBinding
@@ -40,7 +41,7 @@ class HomeActivity : ComponentActivity() {
     }
 
     private fun startHeartRateService(activity: Activity) {
-        val intent = Intent(activity, HeartRateService::class.java)
+        val intent = Intent(activity, HeartRateSensorService::class.java)
 
         startService(intent)
     }
@@ -89,7 +90,9 @@ class HomeActivity : ComponentActivity() {
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
         requestPermissionLauncher.launch(arrayOf(
             Manifest.permission.BODY_SENSORS,
-            Manifest.permission.POST_NOTIFICATIONS
+            Manifest.permission.POST_NOTIFICATIONS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         ))
     }
 
@@ -114,15 +117,16 @@ class HomeActivity : ComponentActivity() {
      * 필수 설정 확인
      * 1. 센서 접근 권한
      * 2. 알림 권한
+     * 3. 위치 권한
      */
     private fun essentialSettings(activity: Activity) =
-        checkPermission(
+        Utils.checkPermission(
             Manifest.permission.BODY_SENSORS, activity
-        ) && checkPermission(
+        ) && Utils.checkPermission(
             Manifest.permission.POST_NOTIFICATIONS, activity
+        ) && Utils.checkPermission(
+            Manifest.permission.ACCESS_FINE_LOCATION, activity
+        ) && Utils.checkPermission(
+            Manifest.permission.ACCESS_COARSE_LOCATION, activity
         )
-
-    private fun checkPermission(
-        permission: String, activity: Activity
-    ) = ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
 }
