@@ -7,4 +7,5 @@ interface MonitoringViewModel {
     val viewModelError: LiveData<Boolean>
 
     fun urgent(location: Location)
+    fun setHeartRate(heartRate: Int)
 }

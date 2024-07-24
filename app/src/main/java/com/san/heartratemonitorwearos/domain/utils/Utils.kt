@@ -11,8 +11,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object Utils {
-    fun getRetrofit() = Retrofit.Builder()
-        .baseUrl("http://43.203.200.27:8081")
+    fun getRetrofit(baseUrl: String) = Retrofit.Builder()
+        .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
         .client(getClient())
         .build()

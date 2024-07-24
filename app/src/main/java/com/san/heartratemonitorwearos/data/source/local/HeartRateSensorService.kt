@@ -35,7 +35,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
     private lateinit var thresholdNotificationBuilder: NotificationCompat.Builder
     private var heartRateSensor: Sensor? = null
     private val heartRateData = mutableListOf<Int>()
-    private val scope = CoroutineScope(Job() + Dispatchers.IO)
+    private val scope = CoroutineScope(Dispatchers.IO)
     private val broadCastIntent = Intent(Const.ACTION_HEART_RATE_BROAD_CAST)
 
     override fun onCreate() {
@@ -53,7 +53,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
     }
 
     private fun initDataService() {
-        dataService = Utils.getRetrofit().create(HeartRateService::class.java)
+        dataService = Utils.getRetrofit("http://43.203.200.27:8081").create(HeartRateService::class.java)
     }
 
     private fun initSensor() {

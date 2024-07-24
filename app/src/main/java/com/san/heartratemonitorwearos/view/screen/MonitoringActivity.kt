@@ -40,7 +40,7 @@ class MonitoringActivity : ComponentActivity() {
         binding = ActivityMonitoringBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val repo = HeartRateRepositoryImpl(Utils.getRetrofit().create(HeartRateService::class.java))
+        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://43.203.200.27:8080").create(HeartRateService::class.java))
         viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo)).get(MonitoringViewModelImpl::class.java)
 
         initObserver(this)
@@ -59,7 +59,8 @@ class MonitoringActivity : ComponentActivity() {
     private fun viewModelErrorObserver(
         activity: Activity
     ) = Observer<Boolean> {
-        if (it) Toast.makeText(activity, SERVICE_SERVER_EXCEPTION_MESSAGE, Toast.LENGTH_SHORT).show()
+        if (it) Toast.makeText(activity, REQUEST_FAIL_MESSAGE, Toast.LENGTH_SHORT).show()
+        else Toast.makeText(activity, REQUEST_SUCCESS_MESSAGE, Toast.LENGTH_SHORT).show()
     }
 
     private fun initListener(activity: Activity) {
@@ -101,9 +102,12 @@ class MonitoringActivity : ComponentActivity() {
                 if (intent.action == Const.ACTION_HEART_RATE_BROAD_CAST) {
                     val data = intent.getIntExtra(Const.TAG_HEART_RATE_INTENT, 0)
                     binding.txtHeartRate.text = data.toString()
+                    viewModel.setHeartRate(data)
                 }
             }
         }
+
+        registerReceiver(receiver, IntentFilter(Const.ACTION_HEART_RATE_BROAD_CAST), RECEIVER_NOT_EXPORTED)
     }
 
     private fun initLocationSetting(activity: Activity) {
@@ -118,16 +122,6 @@ class MonitoringActivity : ComponentActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(receiver, IntentFilter(Const.ACTION_HEART_RATE_BROAD_CAST), RECEIVER_NOT_EXPORTED)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(receiver)
-    }
-
     override fun onBackPressed() {
         super.onBackPressed()
         val startMain = Intent(Intent.ACTION_MAIN)
@@ -136,7 +130,13 @@ class MonitoringActivity : ComponentActivity() {
         startActivity(startMain)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(receiver)
+    }
+
     companion object {
-        private const val SERVICE_SERVER_EXCEPTION_MESSAGE = "서버 상태가 불안정합니다."
+        private const val REQUEST_SUCCESS_MESSAGE = "요청에 성공하였습니다."
+        private const val REQUEST_FAIL_MESSAGE = "요청에 실패하였습니다."
     }
 }

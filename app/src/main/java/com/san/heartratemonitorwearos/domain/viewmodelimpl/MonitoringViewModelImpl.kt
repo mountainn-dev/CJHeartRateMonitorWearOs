@@ -18,8 +18,24 @@ class MonitoringViewModelImpl(
     override val viewModelError: LiveData<Boolean>
         get() = this.isViewModelError
     private val isViewModelError = MutableLiveData<Boolean>()
+    private var lastHeartRate = 0
 
     override fun urgent(location: Location) {
-        // TODO: urgent
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                receiveReport(location, lastHeartRate)
+            }
+        }
+    }
+
+    private suspend fun receiveReport(location: Location, lastHeartRate: Int) {
+        val result = repository.urgent(location, lastHeartRate)
+
+        if (result is Success) isViewModelError.postValue(false)
+        else isViewModelError.postValue(true)
+    }
+
+    override fun setHeartRate(heartRate: Int) {
+        lastHeartRate = heartRate
     }
 }
