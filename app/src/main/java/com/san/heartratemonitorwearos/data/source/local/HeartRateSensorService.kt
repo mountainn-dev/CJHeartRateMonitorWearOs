@@ -146,7 +146,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
             Log.d("heartRate", heartRate.toString())
 
             heartRateData.add(heartRate)
-            if (heartRateData.size >= MAX_HEART_RATE_DATA_COUNT) sendHeartRateData()
+            if (heartRateData.size == MAX_HEART_RATE_DATA_COUNT) sendHeartRateData()
             if (heartRate > HEART_RATE_THRESHOLD) {
                 notificationManager.notify(THRESHOLD_NOTIFICATION_ID, thresholdNotificationBuilder.build())
             }
