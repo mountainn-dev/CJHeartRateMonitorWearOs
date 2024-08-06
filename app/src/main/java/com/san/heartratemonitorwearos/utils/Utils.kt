@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.domain.utils
+package com.san.heartratemonitorwearos.utils
 
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -18,7 +18,7 @@ object Utils {
         .build()
 
     private fun getClient() = OkHttpClient().newBuilder()
-        .addInterceptor(HeaderInterceptor("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0MTIxMiIsImlzcyI6ImVsbGlvdHRfa2ltIiwiZXhwIjoxNzUzMjg4MDA5LCJpYXQiOjE3MjE3NTIwMDl9.8t8FqLRkeUO1fWTLO9Ucbc20GwusxEhx7CmOWYgTktg"))
+        .addInterceptor(HeaderInterceptor("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZXJlbXkiLCJpc3MiOiJlbGxpb3R0X2tpbSIsImV4cCI6MTc1NDQ3Njg4NSwiaWF0IjoxNzIyOTQwODg1fQ.JIFhCVtYzQzUlCkHUqo7vDT7Yp2Zn1fANqhRm9DX3mQ"))
         .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)

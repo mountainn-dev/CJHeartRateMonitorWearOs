@@ -3,18 +3,16 @@ package com.san.heartratemonitorwearos.view.screen
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import com.san.heartratemonitorwearos.BuildConfig
 import com.san.heartratemonitorwearos.databinding.ActivityHomeBinding
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
-import com.san.heartratemonitorwearos.domain.utils.Utils
+import com.san.heartratemonitorwearos.utils.Utils
 
 class HomeActivity : ComponentActivity() {
     private lateinit var binding: ActivityHomeBinding

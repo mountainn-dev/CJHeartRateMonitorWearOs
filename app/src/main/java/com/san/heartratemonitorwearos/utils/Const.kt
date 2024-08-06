@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.domain.utils
+package com.san.heartratemonitorwearos.utils
 
 object Const {
     const val ACTION_HEART_RATE_BROAD_CAST = "HEART_RATE_UPDATE"

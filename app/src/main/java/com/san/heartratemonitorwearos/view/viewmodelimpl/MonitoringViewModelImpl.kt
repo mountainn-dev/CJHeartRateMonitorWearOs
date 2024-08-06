@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.domain.viewmodelimpl
+package com.san.heartratemonitorwearos.view.viewmodelimpl
 
 import android.location.Location
 import androidx.lifecycle.LiveData
@@ -7,7 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.san.heartratemonitorwearos.data.Success
 import com.san.heartratemonitorwearos.data.repository.HeartRateRepository
-import com.san.heartratemonitorwearos.domain.viewmodel.MonitoringViewModel
+import com.san.heartratemonitorwearos.view.viewmodel.MonitoringViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

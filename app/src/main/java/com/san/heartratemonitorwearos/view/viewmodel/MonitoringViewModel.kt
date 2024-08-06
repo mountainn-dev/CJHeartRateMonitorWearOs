@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.domain.viewmodel
+package com.san.heartratemonitorwearos.view.viewmodel
 
 import android.location.Location
 import androidx.lifecycle.LiveData

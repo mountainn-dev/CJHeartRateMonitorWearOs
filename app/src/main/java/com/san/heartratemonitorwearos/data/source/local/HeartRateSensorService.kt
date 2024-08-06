@@ -13,16 +13,15 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
-import com.san.heartratemonitorwearos.domain.utils.Const
+import com.san.heartratemonitorwearos.utils.Const
 import com.san.heartratemonitorwearos.R
 import com.san.heartratemonitorwearos.data.entity.HeartRateEntity
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
-import com.san.heartratemonitorwearos.domain.utils.Utils
+import com.san.heartratemonitorwearos.utils.Utils
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
 import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
@@ -165,7 +164,13 @@ class HeartRateSensorService : Service(), SensorEventListener {
         }
     }
 
-    private fun avgHeartRateData() = heartRateData.filter { it != 0 }.average().toInt()
+    private fun avgHeartRateData(): Int {
+        heartRateData.filter { it != 0 }.average().toInt()
+        val zeroRemovedHeartRate = heartRateData.filter { it != 0 }
+
+        return if (zeroRemovedHeartRate.isNotEmpty()) zeroRemovedHeartRate.average().toInt()
+        else 0
+    }
 
     private suspend fun setHeartRate(heartRate: Int) {
         try {
