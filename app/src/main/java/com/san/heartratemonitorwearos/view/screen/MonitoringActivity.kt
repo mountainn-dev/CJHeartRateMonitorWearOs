@@ -40,7 +40,7 @@ class MonitoringActivity : ComponentActivity() {
         binding = ActivityMonitoringBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://43.203.200.27:8080").create(HeartRateService::class.java))
+        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://49.247.41.208:8080").create(HeartRateService::class.java))
         viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo)).get(MonitoringViewModelImpl::class.java)
 
         initObserver(this)

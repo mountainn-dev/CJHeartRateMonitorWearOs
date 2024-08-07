@@ -18,7 +18,7 @@ object Utils {
         .build()
 
     private fun getClient() = OkHttpClient().newBuilder()
-        .addInterceptor(HeaderInterceptor("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqZXJlbXkiLCJpc3MiOiJlbGxpb3R0X2tpbSIsImV4cCI6MTc1NDQ3Njg4NSwiaWF0IjoxNzIyOTQwODg1fQ.JIFhCVtYzQzUlCkHUqo7vDT7Yp2Zn1fANqhRm9DX3mQ"))
+        .addInterceptor(HeaderInterceptor("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ0ZXN0MTIiLCJpc3MiOiJlbGxpb3R0X2tpbSIsImV4cCI6MTc1NDU3MzAzMCwiaWF0IjoxNzIzMDM3MDMwfQ.wPkn5GNnHu5ys2Z_bzTKGFDK0FJZQXHHykrrsBcWdzk"))
         .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY })
         .connectTimeout(5, TimeUnit.SECONDS)
         .readTimeout(5, TimeUnit.SECONDS)
