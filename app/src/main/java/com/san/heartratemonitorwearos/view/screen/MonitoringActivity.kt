@@ -21,8 +21,8 @@ import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImp
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
-import com.san.heartratemonitorwearos.utils.Const
-import com.san.heartratemonitorwearos.utils.Utils
+import com.san.heartratemonitorwearos.domain.utils.Const
+import com.san.heartratemonitorwearos.domain.utils.Utils
 import com.san.heartratemonitorwearos.view.viewmodel.MonitoringViewModel
 import com.san.heartratemonitorwearos.view.viewmodelfactory.MonitoringViewModelFactory
 import com.san.heartratemonitorwearos.view.viewmodelimpl.MonitoringViewModelImpl

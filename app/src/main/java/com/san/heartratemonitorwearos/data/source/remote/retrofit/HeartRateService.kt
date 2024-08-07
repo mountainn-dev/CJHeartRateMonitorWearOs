@@ -9,9 +9,7 @@ import retrofit2.http.POST
 
 interface HeartRateService {
     @POST("/updateWorkNow")
-    suspend fun updateWorkNow(
-        @Body data: UpdateWorkEntity
-    )
+    suspend fun updateWorkNow()
 
     @POST("/receiveReport")
     suspend fun receiveReport(

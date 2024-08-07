@@ -11,6 +11,16 @@ import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateServi
 class HeartRateRepositoryImpl(
     private val service: HeartRateService
 ) : HeartRateRepository {
+    override suspend fun updateWorkNow(): Result<Boolean> {
+        try {
+            service.updateWorkNow()
+            return Result.success(true)
+        } catch (e: Exception) {
+            Log.e("updateWorkNowException", e.toString())
+            return Result.error(e)
+        }
+    }
+
     override suspend fun urgent(
         location: Location,
         lastHeartRate: Int

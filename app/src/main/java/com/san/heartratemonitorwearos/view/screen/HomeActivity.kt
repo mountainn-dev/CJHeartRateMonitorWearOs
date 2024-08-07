@@ -7,22 +7,63 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.san.heartratemonitorwearos.BuildConfig
+import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImpl
 import com.san.heartratemonitorwearos.databinding.ActivityHomeBinding
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
-import com.san.heartratemonitorwearos.utils.Utils
+import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
+import com.san.heartratemonitorwearos.domain.state.UiState
+import com.san.heartratemonitorwearos.domain.utils.Utils
+import com.san.heartratemonitorwearos.view.viewmodel.HomeViewModel
+import com.san.heartratemonitorwearos.view.viewmodelfactory.HomeViewModelFactory
+import com.san.heartratemonitorwearos.view.viewmodelfactory.MonitoringViewModelFactory
+import com.san.heartratemonitorwearos.view.viewmodelimpl.HomeViewModelImpl
+import com.san.heartratemonitorwearos.view.viewmodelimpl.MonitoringViewModelImpl
 
 class HomeActivity : ComponentActivity() {
     private lateinit var binding: ActivityHomeBinding
+    private lateinit var viewModel: HomeViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://49.247.41.208:8080").create(
+            HeartRateService::class.java))
+        viewModel = ViewModelProvider(this, HomeViewModelFactory(repo)).get(
+            HomeViewModelImpl::class.java)
+
+        initObserver(this)
         initListener(this)
         requestPermission()
+    }
+
+    private fun initObserver(activity: Activity) {
+        viewModel.state.observe(
+            activity as LifecycleOwner,
+            stateObserver(activity)
+        )
+    }
+
+    private fun stateObserver(activity: Activity) = Observer<UiState> {
+        when(it) {
+            UiState.Success -> {
+                startHeartRateService(activity)
+                sendUserToMonitoringScreen(activity)
+            }
+            UiState.Loading -> {}
+            UiState.Timeout -> {}
+            UiState.ServiceError -> {
+                Toast.makeText(activity, SERVICE_ERROR_MESSAGE, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
     
     private fun initListener(activity: Activity) {
@@ -33,8 +74,7 @@ class HomeActivity : ComponentActivity() {
 
     private fun setBtnStartMonitoringListener(activity: Activity) {
         binding.btnStartMonitoring.setOnClickListener {
-            startHeartRateService(activity)
-            sendUserToMonitoringScreen(activity)
+            viewModel.updateWorkStatus()
         }
     }
 
@@ -127,4 +167,8 @@ class HomeActivity : ComponentActivity() {
         ) && Utils.checkPermission(
             Manifest.permission.ACCESS_COARSE_LOCATION, activity
         )
+
+    companion object {
+        private const val SERVICE_ERROR_MESSAGE = "서비스 요청에 실패하였습니다."
+    }
 }

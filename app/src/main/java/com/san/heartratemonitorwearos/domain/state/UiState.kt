@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.state
+package com.san.heartratemonitorwearos.domain.state
 
 sealed class UiState {
     object Success: UiState()

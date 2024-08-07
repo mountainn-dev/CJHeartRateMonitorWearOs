@@ -1,4 +1,4 @@
-package com.san.heartratemonitorwearos.utils
+package com.san.heartratemonitorwearos.domain.utils
 
 import android.app.Activity
 import android.content.pm.PackageManager

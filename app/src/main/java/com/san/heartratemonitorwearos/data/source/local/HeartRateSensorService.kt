@@ -13,13 +13,12 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.TaskStackBuilder
-import com.san.heartratemonitorwearos.utils.Const
+import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.R
 import com.san.heartratemonitorwearos.data.entity.HeartRateEntity
-import com.san.heartratemonitorwearos.data.entity.UrgentEntity
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateDataService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
-import com.san.heartratemonitorwearos.utils.Utils
+import com.san.heartratemonitorwearos.domain.utils.Utils
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
 import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
 import kotlinx.coroutines.CoroutineScope
