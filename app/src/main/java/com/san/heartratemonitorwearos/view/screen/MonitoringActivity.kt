@@ -21,6 +21,7 @@ import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImp
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
+import com.san.heartratemonitorwearos.domain.state.UiState
 import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.domain.utils.Utils
 import com.san.heartratemonitorwearos.view.viewmodel.MonitoringViewModel
@@ -50,17 +51,28 @@ class MonitoringActivity : ComponentActivity() {
     }
 
     private fun initObserver(activity: Activity) {
-        viewModel.viewModelError.observe(
+        viewModel.state.observe(
             activity as LifecycleOwner,
-            viewModelErrorObserver(activity)
+            stateObserver(activity)
         )
     }
 
-    private fun viewModelErrorObserver(
+    private fun stateObserver(
         activity: Activity
-    ) = Observer<Boolean> {
-        if (it) Toast.makeText(activity, REQUEST_FAIL_MESSAGE, Toast.LENGTH_SHORT).show()
-        else Toast.makeText(activity, REQUEST_SUCCESS_MESSAGE, Toast.LENGTH_SHORT).show()
+    ) = Observer<UiState> {
+        when(it) {
+            UiState.Success -> {
+                if (viewModel.workEnd) {
+                    stopHeartRateService(activity)
+                    finish()
+                }
+            }
+            UiState.Loading -> {}
+            UiState.Timeout -> {}
+            UiState.ServiceError -> {
+                Toast.makeText(activity, SERVICE_ERROR_MESSAGE, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun initListener(activity: Activity) {
@@ -70,8 +82,7 @@ class MonitoringActivity : ComponentActivity() {
 
     private fun setBtnEndMonitoringListener(activity: Activity) {
         binding.btnEndMonitoring.setOnClickListener {
-            stopHeartRateService(activity)
-            finish()
+            viewModel.updateWorkStatus()
         }
     }
 
@@ -136,7 +147,6 @@ class MonitoringActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val REQUEST_SUCCESS_MESSAGE = "요청에 성공하였습니다."
-        private const val REQUEST_FAIL_MESSAGE = "요청에 실패하였습니다."
+        private const val SERVICE_ERROR_MESSAGE = "서비스 요청에 실패하였습니다."
     }
 }
