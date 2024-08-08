@@ -46,10 +46,15 @@ class MonitoringActivity : ComponentActivity() {
         val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://49.247.41.208:8080", idToken).create(HeartRateService::class.java))
         viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo, userId)).get(MonitoringViewModelImpl::class.java)
 
+        initUserData(userId)
         initObserver(this)
         initListener(this)
         initBroadCastReceiver()
         initLocationSetting(this)
+    }
+
+    private fun initUserData(userId: String) {
+        binding.txtUserId.text = userId
     }
 
     private fun initObserver(activity: Activity) {
