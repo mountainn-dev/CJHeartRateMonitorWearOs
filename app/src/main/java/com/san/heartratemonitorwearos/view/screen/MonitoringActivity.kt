@@ -41,8 +41,10 @@ class MonitoringActivity : ComponentActivity() {
         binding = ActivityMonitoringBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://49.247.41.208:8080").create(HeartRateService::class.java))
-        viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo)).get(MonitoringViewModelImpl::class.java)
+        val idToken = intent.getStringExtra(Const.TAG_ID_TOKEN) ?: ""
+        val userId = intent.getStringExtra(Const.TAG_USER_ID) ?: ""
+        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://49.247.41.208:8080", idToken).create(HeartRateService::class.java))
+        viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo, userId)).get(MonitoringViewModelImpl::class.java)
 
         initObserver(this)
         initListener(this)

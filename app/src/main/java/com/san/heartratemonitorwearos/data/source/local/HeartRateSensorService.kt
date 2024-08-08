@@ -34,6 +34,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
     private lateinit var heartRateDataService: HeartRateDataService
     private lateinit var foregroundNotificationBuilder: NotificationCompat.Builder
     private lateinit var thresholdNotificationBuilder: NotificationCompat.Builder
+    private lateinit var idToken: String
     private var heartRateSensor: Sensor? = null
     private val heartRateData = mutableListOf<Int>()
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -54,8 +55,8 @@ class HeartRateSensorService : Service(), SensorEventListener {
     }
 
     private fun initApiService() {
-        heartRateService = Utils.getRetrofit("http://49.247.41.208:8080").create(HeartRateService::class.java)
-        heartRateDataService = Utils.getRetrofit("http://49.247.47.116:8082").create(HeartRateDataService::class.java)
+        heartRateService = Utils.getRetrofit("http://49.247.41.208:8080", null).create(HeartRateService::class.java)
+        heartRateDataService = Utils.getRetrofit("http://49.247.47.116:8082", null).create(HeartRateDataService::class.java)
 
         // updateWorkNow
     }
@@ -125,6 +126,10 @@ class HeartRateSensorService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        idToken = intent?.getStringExtra(Const.TAG_ID_TOKEN) ?: ""
+        heartRateService = Utils.getRetrofit("http://49.247.41.208:8080", idToken).create(HeartRateService::class.java)
+        heartRateDataService = Utils.getRetrofit("http://49.247.47.116:8082", idToken).create(HeartRateDataService::class.java)
+
         if (!serviceRunning) {
             registerHeartRateListener(this)
             serviceRunning = true
@@ -204,7 +209,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
         private const val FOREGROUND_NOTIFICATION_CONTENT = "심박수 감지중"
         private const val THRESHOLD_NOTIFICATION_CONTENT = "현재 심박수가 너무 높습니다. 잠시 휴식을 취하세요."
         private const val HEART_RATE_THRESHOLD = 100
-        private const val MAX_HEART_RATE_DATA_COUNT = 3
+        private const val MAX_HEART_RATE_DATA_COUNT = 60
         private var serviceRunning = false
     }
 }

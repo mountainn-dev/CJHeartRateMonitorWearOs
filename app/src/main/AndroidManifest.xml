@@ -36,7 +36,8 @@
             android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
+                <action android:name="com.google.android.gms.wearable.NODE_MIGRATED" />
+                <data android:scheme="wear"/>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

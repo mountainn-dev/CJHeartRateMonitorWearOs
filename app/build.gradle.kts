@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.san.heartratemonitorwearos"
+        applicationId = "com.san.heartratemonitor"
         minSdk = 33
         targetSdk = 34
         versionCode = 1

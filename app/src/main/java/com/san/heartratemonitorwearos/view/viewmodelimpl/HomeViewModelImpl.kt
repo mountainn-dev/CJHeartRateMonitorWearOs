@@ -18,6 +18,14 @@ class HomeViewModelImpl(
     override val state: LiveData<UiState>
         get() = viewModelState
     private val viewModelState = MutableLiveData<UiState>(UiState.Loading)
+    override lateinit var idToken: String
+    override lateinit var userId: String
+
+
+    override fun setUserData(idToken: String, userId: String) {
+        this.idToken = idToken
+        this.userId = userId
+    }
 
     override fun updateWorkStatus() {
         viewModelScope.launch {
@@ -28,7 +36,7 @@ class HomeViewModelImpl(
     }
 
     private suspend fun updateWorkNow() {
-        val result = repository.updateWorkNow()
+        val result = repository.updateWorkNow(userId)
 
         if (result is Success) viewModelState.postValue(UiState.Success)
         else viewModelState.postValue(UiState.ServiceError)

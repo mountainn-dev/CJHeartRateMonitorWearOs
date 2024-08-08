@@ -14,7 +14,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MonitoringViewModelImpl(
-    private val repository: HeartRateRepository
+    private val repository: HeartRateRepository,
+    private val userId: String
 ) : MonitoringViewModel, ViewModel() {
     override val state: LiveData<UiState>
         get() = viewModelState
@@ -50,7 +51,7 @@ class MonitoringViewModelImpl(
     }
 
     private suspend fun updateWorkNow() {
-        val result = repository.updateWorkNow()
+        val result = repository.updateWorkNow(userId)
 
         if (result is Success) {
             workEnd = true
