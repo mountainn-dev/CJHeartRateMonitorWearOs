@@ -18,6 +18,30 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="@string/present_user_account"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/margin_padding_extremely_samll"
+            android:text="@string/colon"/>
+
+        <TextView
+            android:id="@+id/txtUserId"
+            android:layout_width="@dimen/size_heart_rate"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="@string/present_heart_rate"/>
 
         <TextView
@@ -37,7 +61,6 @@
         android:id="@+id/btnEndMonitoring"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/margin_padding_small"
         android:text="@string/btn_end_monitoring"/>
 
     <Button

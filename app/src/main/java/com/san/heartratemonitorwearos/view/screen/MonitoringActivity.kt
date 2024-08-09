@@ -21,11 +21,12 @@ import com.san.heartratemonitorwearos.data.repositoryimpl.HeartRateRepositoryImp
 import com.san.heartratemonitorwearos.data.source.local.HeartRateSensorService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
 import com.san.heartratemonitorwearos.databinding.ActivityMonitoringBinding
+import com.san.heartratemonitorwearos.domain.state.UiState
 import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.domain.utils.Utils
-import com.san.heartratemonitorwearos.domain.viewmodel.MonitoringViewModel
-import com.san.heartratemonitorwearos.domain.viewmodelfactory.MonitoringViewModelFactory
-import com.san.heartratemonitorwearos.domain.viewmodelimpl.MonitoringViewModelImpl
+import com.san.heartratemonitorwearos.view.viewmodel.MonitoringViewModel
+import com.san.heartratemonitorwearos.view.viewmodelfactory.MonitoringViewModelFactory
+import com.san.heartratemonitorwearos.view.viewmodelimpl.MonitoringViewModelImpl
 
 class MonitoringActivity : ComponentActivity() {
     private lateinit var binding: ActivityMonitoringBinding
@@ -40,27 +41,45 @@ class MonitoringActivity : ComponentActivity() {
         binding = ActivityMonitoringBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://43.203.200.27:8080").create(HeartRateService::class.java))
-        viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo)).get(MonitoringViewModelImpl::class.java)
+        val idToken = intent.getStringExtra(Const.TAG_ID_TOKEN) ?: ""
+        val userId = intent.getStringExtra(Const.TAG_USER_ID) ?: ""
+        val repo = HeartRateRepositoryImpl(Utils.getRetrofit("http://49.247.41.208:8080", idToken).create(HeartRateService::class.java))
+        viewModel = ViewModelProvider(this, MonitoringViewModelFactory(repo, userId)).get(MonitoringViewModelImpl::class.java)
 
+        initUserData(userId)
         initObserver(this)
         initListener(this)
         initBroadCastReceiver()
         initLocationSetting(this)
     }
 
+    private fun initUserData(userId: String) {
+        binding.txtUserId.text = userId
+    }
+
     private fun initObserver(activity: Activity) {
-        viewModel.viewModelError.observe(
+        viewModel.state.observe(
             activity as LifecycleOwner,
-            viewModelErrorObserver(activity)
+            stateObserver(activity)
         )
     }
 
-    private fun viewModelErrorObserver(
+    private fun stateObserver(
         activity: Activity
-    ) = Observer<Boolean> {
-        if (it) Toast.makeText(activity, REQUEST_FAIL_MESSAGE, Toast.LENGTH_SHORT).show()
-        else Toast.makeText(activity, REQUEST_SUCCESS_MESSAGE, Toast.LENGTH_SHORT).show()
+    ) = Observer<UiState> {
+        when(it) {
+            UiState.Success -> {
+                if (viewModel.workEnd) {
+                    stopHeartRateService(activity)
+                    finish()
+                }
+            }
+            UiState.Loading -> {}
+            UiState.Timeout -> {}
+            UiState.ServiceError -> {
+                Toast.makeText(activity, SERVICE_ERROR_MESSAGE, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun initListener(activity: Activity) {
@@ -70,8 +89,7 @@ class MonitoringActivity : ComponentActivity() {
 
     private fun setBtnEndMonitoringListener(activity: Activity) {
         binding.btnEndMonitoring.setOnClickListener {
-            stopHeartRateService(activity)
-            finish()
+            viewModel.updateWorkStatus()
         }
     }
 
@@ -136,7 +154,6 @@ class MonitoringActivity : ComponentActivity() {
     }
 
     companion object {
-        private const val REQUEST_SUCCESS_MESSAGE = "요청에 성공하였습니다."
-        private const val REQUEST_FAIL_MESSAGE = "요청에 실패하였습니다."
+        private const val SERVICE_ERROR_MESSAGE = "서비스 요청에 실패하였습니다."
     }
 }

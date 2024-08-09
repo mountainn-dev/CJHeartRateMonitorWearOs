@@ -16,13 +16,13 @@ import androidx.core.app.TaskStackBuilder
 import com.san.heartratemonitorwearos.domain.utils.Const
 import com.san.heartratemonitorwearos.R
 import com.san.heartratemonitorwearos.data.entity.HeartRateEntity
+import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateDataService
 import com.san.heartratemonitorwearos.data.source.remote.retrofit.HeartRateService
 import com.san.heartratemonitorwearos.domain.utils.Utils
 import com.san.heartratemonitorwearos.view.screen.HomeActivity
 import com.san.heartratemonitorwearos.view.screen.MonitoringActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
@@ -30,9 +30,11 @@ class HeartRateSensorService : Service(), SensorEventListener {
 
     private lateinit var sensorManager: SensorManager
     private lateinit var notificationManager: NotificationManager
-    private lateinit var dataService: HeartRateService
+    private lateinit var heartRateService: HeartRateService
+    private lateinit var heartRateDataService: HeartRateDataService
     private lateinit var foregroundNotificationBuilder: NotificationCompat.Builder
     private lateinit var thresholdNotificationBuilder: NotificationCompat.Builder
+    private lateinit var idToken: String
     private var heartRateSensor: Sensor? = null
     private val heartRateData = mutableListOf<Int>()
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -42,7 +44,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
         super.onCreate()
 
         initManagers()
-        initDataService()
+        initApiService()
         initSensor()
         initNotification()
     }
@@ -52,8 +54,11 @@ class HeartRateSensorService : Service(), SensorEventListener {
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
     }
 
-    private fun initDataService() {
-        dataService = Utils.getRetrofit("http://43.203.200.27:8081").create(HeartRateService::class.java)
+    private fun initApiService() {
+        heartRateService = Utils.getRetrofit("http://49.247.41.208:8080", null).create(HeartRateService::class.java)
+        heartRateDataService = Utils.getRetrofit("http://49.247.47.116:8082", null).create(HeartRateDataService::class.java)
+
+        // updateWorkNow
     }
 
     private fun initSensor() {
@@ -121,6 +126,10 @@ class HeartRateSensorService : Service(), SensorEventListener {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        idToken = intent?.getStringExtra(Const.TAG_ID_TOKEN) ?: ""
+        heartRateService = Utils.getRetrofit("http://49.247.41.208:8080", idToken).create(HeartRateService::class.java)
+        heartRateDataService = Utils.getRetrofit("http://49.247.47.116:8082", idToken).create(HeartRateDataService::class.java)
+
         if (!serviceRunning) {
             registerHeartRateListener(this)
             serviceRunning = true
@@ -146,7 +155,7 @@ class HeartRateSensorService : Service(), SensorEventListener {
             Log.d("heartRate", heartRate.toString())
 
             heartRateData.add(heartRate)
-            if (heartRateData.size >= MAX_HEART_RATE_DATA_COUNT) sendHeartRateData()
+            if (heartRateData.size == MAX_HEART_RATE_DATA_COUNT) sendHeartRateData(HeartRateEntity(avgHeartRateData()))
             if (heartRate > HEART_RATE_THRESHOLD) {
                 notificationManager.notify(THRESHOLD_NOTIFICATION_ID, thresholdNotificationBuilder.build())
             }
@@ -158,18 +167,24 @@ class HeartRateSensorService : Service(), SensorEventListener {
         sendBroadcast(broadCastIntent)
     }
 
-    private fun sendHeartRateData() {
+    private fun sendHeartRateData(entity: HeartRateEntity) {
         scope.launch {
-            setHeartRate(avgHeartRateData())
             heartRateData.clear()
+            setHeartRate(entity)
         }
     }
 
-    private fun avgHeartRateData() = heartRateData.filter { it != 0 }.average().toInt()
+    private fun avgHeartRateData(): Int {
+        heartRateData.filter { it != 0 }.average().toInt()
+        val zeroRemovedHeartRate = heartRateData.filter { it != 0 }
 
-    private suspend fun setHeartRate(heartRate: Int) {
+        return if (zeroRemovedHeartRate.isNotEmpty()) zeroRemovedHeartRate.average().toInt()
+        else 0
+    }
+
+    private suspend fun setHeartRate(entity: HeartRateEntity) {
         try {
-            dataService.setHeartRate(HeartRateEntity(heartRate))
+            heartRateDataService.setHeartRate(entity)
             Log.d("setHeartRate", "success")
         } catch (e: Exception) {
             Log.d("setHeartRateException", e.message ?: e.toString())

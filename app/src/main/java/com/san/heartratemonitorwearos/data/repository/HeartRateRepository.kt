@@ -6,5 +6,6 @@ import com.san.heartratemonitorwearos.data.entity.HeartRateEntity
 import com.san.heartratemonitorwearos.data.entity.UrgentEntity
 
 interface HeartRateRepository {
+    suspend fun updateWorkNow(userId: String): Result<Boolean>
     suspend fun urgent(location: Location, lastHeartRate: Int): Result<Boolean>
 }
